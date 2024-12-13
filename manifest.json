@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Web Content Extractor",
+  "version": "1.0",
+  "description": "A simple Chrome extension to extract web page content",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "images/icon48.png"
+    }
+  },
+  "icons": {
+    "48": "images/icon48.png"
+  }
+}

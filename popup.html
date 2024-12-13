@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Web Content Extractor</title>
+  <style>
+    body {
+      width: 800px;
+      padding: 10px;
+      font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif;
+    }
+    .container {
+      display: flex;
+      gap: 10px;
+      height: calc(100vh - 20px);
+    }
+    .left-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .right-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 8px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      flex: 1;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    button.secondary {
+      background-color: #666;
+    }
+    button.secondary:hover {
+      background-color: #555;
+    }
+    .content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    textarea {
+      flex: 1;
+      padding: 12px;
+      box-sizing: border-box;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: none;
+      tab-size: 4;
+      -moz-tab-size: 4;
+    }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin: 10px 0;
+      align-items: center;
+    }
+    .charCount {
+      color: #666;
+      font-size: 12px;
+      margin-left: auto;
+    }
+    .settings-panel {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      width: 400px;
+    }
+    .settings-panel.show {
+      display: block;
+    }
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+    .overlay.show {
+      display: block;
+    }
+    #blockList {
+      width: 100%;
+      height: 200px;
+      margin: 10px 0;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: vertical;
+    }
+    .panel-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
+    .help-text {
+      font-size: 12px;
+      color: #666;
+      margin: 5px 0;
+    }
+    .split-options {
+      margin: 10px 0;
+      padding: 10px;
+      background: #f5f5f5;
+      border-radius: 4px;
+    }
+    .split-options label {
+      display: block;
+      margin: 5px 0;
+    }
+    .split-options input[type="text"],
+    .split-options input[type="number"] {
+      width: 100px;
+      padding: 4px;
+      margin-left: 10px;
+    }
+    .split-options select {
+      width: 150px;
+      padding: 4px;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="left-panel">
+      <div class="button-group">
+        <button id="extractButton">提取页面内容</button>
+        <button id="settingsButton" class="secondary">屏蔽词设置</button>
+      </div>
+      <div class="content-area">
+        <textarea id="sourceContent" spellcheck="false" placeholder="原文内容"></textarea>
+        <div class="toolbar">
+          <button id="clearSourceButton" class="secondary">清空</button>
+          <span class="charCount" id="sourceCharCount">字数：0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-panel">
+      <div class="split-options">
+        <label>
+          拆分方式：
+          <select id="splitMode">
+            <option value="paragraph">按段落</option>
+            <option value="custom">自定义分隔符</option>
+            <option value="fixedLength">固定字数</option>
+          </select>
+        </label>
+        <label id="customSeparatorLabel" style="display: none;">
+          分隔符：
+          <input type="text" id="customSeparator" value="\n\n">
+        </label>
+        <label id="fixedLengthLabel" style="display: none;">
+          每段字数：
+          <input type="number" id="fixedLength" value="500" min="100">
+        </label>
+        <label>
+          <input type="checkbox" id="addNumbering" checked>
+          添加段落编号
+        </label>
+      </div>
+      <div class="button-group">
+        <button id="splitButton">拆分文本</button>
+        <button id="copyButton">复制内容</button>
+        <button id="saveButton">保存到文件</button>
+      </div>
+      <div class="content-area">
+        <textarea id="splitContent" spellcheck="false" placeholder="拆分结果"></textarea>
+        <div class="toolbar">
+          <button id="clearSplitButton" class="secondary">清空</button>
+          <span class="charCount" id="splitCharCount">字数：0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+  <div class="settings-panel" id="settingsPanel">
+    <h3>屏蔽词设置</h3>
+    <p class="help-text">每行输入一个屏蔽词，提取内容时将自动过滤这些词语</p>
+    <textarea id="blockList" placeholder="在这里输入屏蔽词，每行一个"></textarea>
+    <div class="panel-buttons">
+      <button id="cancelSettings" class="secondary">取消</button>
+      <button id="saveSettings">保存设置</button>
+    </div>
+  </div>
+
+  <script src="jszip.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
